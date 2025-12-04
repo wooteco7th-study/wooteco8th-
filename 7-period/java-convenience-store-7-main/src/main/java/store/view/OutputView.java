@@ -7,40 +7,53 @@ import store.domain.Promotion;
 public class OutputView {
 
     private static final String NEW_LINE = System.lineSeparator();
-    private static final String INVENTORY_MESSAGE = """
-            안녕하세요. w편의점입니다.
-            현재 보유하고 있는 상품입니다.
-            
-            """;
-    private static final String NON_PROMOTION_PRODUCT_FORMAT = "- %s %,d원 %d개";
-    private static final String NON_PROMOTION_PRODUCT_OUT_OF_STOCK_FORMAT = "- %s %,d원 재고 없음";
-    private static final String PROMOTION_PRODUCT_FORMAT = "- %s %,d원 %d개 %s";
-    private static final String PROMOTION_PRODUCT_OUT_OF_STOCK_FORMAT = "- %s %,d원 재고 없음 %s";
+    private static final String PRODUCT_FORMAT = "- %s %,d원 %s %s";
 
     public static void showInventory(List<Product> products) {
-        System.out.println(INVENTORY_MESSAGE);
-        for (Product product : products) {
-            if (product.getPromotion().equals(Promotion.NONE)) {
-                int quantity = product.getInventory().getNonPromotionQuantity();
-                if (quantity != 0) {
-                    System.out.println(NON_PROMOTION_PRODUCT_FORMAT.formatted(product.getName(), product.getPrice(), quantity));
-                } else {
-                    System.out.println(NON_PROMOTION_PRODUCT_OUT_OF_STOCK_FORMAT.formatted(product.getName(), product.getPrice()));
-                }
-            } else {
-                int promotionQuantity = product.getInventory().getPromotionQuantity();
-                if (promotionQuantity != 0) {
-                    System.out.println(PROMOTION_PRODUCT_FORMAT.formatted(product.getName(), product.getPrice(), promotionQuantity, product.getPromotion().getName()));
-                } else {
-                    System.out.println(PROMOTION_PRODUCT_OUT_OF_STOCK_FORMAT.formatted(product.getName(), product.getPrice(), product.getPromotion().getName()));
-                }
-                int nonPromotionQuantity = product.getInventory().getNonPromotionQuantity();
-                if (nonPromotionQuantity != 0) {
-                    System.out.println(NON_PROMOTION_PRODUCT_FORMAT.formatted(product.getName(), product.getPrice(), nonPromotionQuantity, product.getPromotion().getName()));
-                } else {
-                    System.out.println(NON_PROMOTION_PRODUCT_OUT_OF_STOCK_FORMAT.formatted(product.getName(), product.getPrice(), product.getPromotion().getName()));
-                }
-            }
+        System.out.println("""
+                안녕하세요. w편의점입니다.
+                현재 보유하고 있는 상품입니다.
+                
+                """);
+        products.forEach(OutputView::showProduct);
+    }
+
+    private static void showProduct(Product product) {
+        if (product.getPromotion().equals(Promotion.NONE)) {
+            showNonPromotionProduct(product);
+            return;
         }
+        showPromotionProduct(product);
+        showNonPromotionProduct(product);
+    }
+
+    private static void showNonPromotionProduct(Product product) {
+        int quantity = product.getInventory().getNonPromotionQuantity();
+        String quantityFormat = makeQuantityFormat(quantity);
+        String nonPromotionFormat = "";
+        System.out.println(PRODUCT_FORMAT.formatted(
+                product.getName(),
+                product.getPrice(),
+                quantityFormat,
+                nonPromotionFormat
+        ));
+    }
+
+    private static void showPromotionProduct(Product product) {
+        int quantity = product.getInventory().getPromotionQuantity();
+        String quantityFormat = makeQuantityFormat(quantity);
+        System.out.println(PRODUCT_FORMAT.formatted(
+                product.getName(),
+                product.getPrice(),
+                quantityFormat,
+                product.getPromotion().getName()
+        ));
+    }
+
+    private static String makeQuantityFormat(int quantity) {
+        if (quantity == 0) {
+            return "재고 없음";
+        }
+        return quantity + "개";
     }
 }
