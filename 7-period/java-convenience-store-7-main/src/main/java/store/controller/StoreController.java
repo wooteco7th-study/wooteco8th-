@@ -7,6 +7,7 @@ import store.domain.Product;
 import store.domain.Promotion;
 import store.repository.ProductRepository;
 import store.util.Parser;
+import store.view.OutputView;
 
 public class StoreController {
 
@@ -33,5 +34,6 @@ public class StoreController {
                 }
             }
         }
+        OutputView.showInventory(productRepository.findAll());
     }
 }
