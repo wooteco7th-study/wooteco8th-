@@ -4,6 +4,7 @@ public enum ExceptionMessage {
 
     INPUT_BLANK("빈 값을 입력하셨습니다."),
     PROMOTION_NOT_FOUND("존재하지 않는 프로모션입니다."),
+    INVALID_PRODUCT_QUANTITY_FORMAT("잘못된 상품 및 수량 입력 형식입니다."),
     ;
     private final String message;
 
