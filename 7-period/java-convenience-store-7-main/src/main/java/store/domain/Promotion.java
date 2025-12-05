@@ -1,27 +1,46 @@
 package store.domain;
 
-import java.util.Arrays;
-import store.exception.ExceptionMessage;
+import java.time.LocalDate;
 
-public enum Promotion {
-
-    SODA("탄산2+1"),
-    MD_RECOMMEND("MD추천상품"),
-    SHINNING_DISCOUNT("반짝할인"),
-    NONE("재고 없음");
+public class Promotion {
 
     private final String name;
+    private final int buy;
+    private final int get;
+    private final LocalDate startDate;
+    private final LocalDate endDate;
+    private final PromotionType type;
 
-
-    public static Promotion from(String promotionName) {
-        return Arrays.stream(Promotion.values())
-                .filter(element -> element.name.equals(promotionName))
-                .findFirst()
-                .orElseThrow(() -> new IllegalArgumentException(ExceptionMessage.PROMOTION_NOT_FOUND.getMessage()));
+    public enum PromotionType {
+        ACTIVE, NONE
     }
 
-    Promotion(String name) {
+    public static Promotion none() {
+        return new Promotion("null", 0, 0,
+                LocalDate.MIN, LocalDate.MIN, PromotionType.NONE);
+    }
+
+    public static Promotion of(String name, String buy, String get, String startDate, String endDate) {
+        return new Promotion(name, Integer.parseInt(buy), Integer.parseInt(get),
+                LocalDate.parse(startDate), LocalDate.parse(endDate), PromotionType.ACTIVE);
+    }
+
+    public Promotion(String name, int buy, int get,
+                     LocalDate startDate, LocalDate endDate, PromotionType type) {
         this.name = name;
+        this.buy = buy;
+        this.get = get;
+        this.startDate = startDate;
+        this.endDate = endDate;
+        this.type = type;
+    }
+
+    public boolean hasSameName(String promotionName) {
+        return this.name.equals(promotionName);
+    }
+
+    public boolean isActive() {
+        return type == PromotionType.ACTIVE;
     }
 
     public String getName() {

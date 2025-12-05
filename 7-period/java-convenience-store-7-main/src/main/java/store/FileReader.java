@@ -18,6 +18,10 @@ public class FileReader {
         return readLines(PRODUCTS_PATH);
     }
 
+    public static List<String> readPromotions() {
+        return readLines(PROMOTIONS_PATH);
+    }
+
     private static List<String> readLines(String path) {
         try {
             List<String> allLines = Files.readAllLines(Path.of(path), StandardCharsets.UTF_8);

@@ -7,6 +7,13 @@ public class Product {
     private final Promotion promotion;
     private final Inventory inventory;
 
+    public static Product of(String name, int price, Promotion promotion, int quantity) {
+        if (promotion.isActive()) {
+            return new Product(name, price, promotion, new Inventory(quantity, 0));
+        }
+        return new Product(name, price, promotion, new Inventory(0, quantity));
+    }
+
     public Product(String name, int price, Promotion promotion, Inventory inventory) {
         this.name = name;
         this.price = price;
@@ -14,12 +21,16 @@ public class Product {
         this.inventory = inventory;
     }
 
-    public void addPromotionQuantity(int quantity) {
-        inventory.addPromotionQuantity(quantity);
+    public void addQuantityByPromotionType(int quantity, Promotion promotion) {
+        if (promotion.isActive()) {
+            inventory.addPromotionQuantity(quantity);
+            return;
+        }
+        inventory.addNonPromotionQuantity(quantity);
     }
 
-    public void addNonPromotionQuantity(int quantity) {
-        inventory.addNonPromotionQuantity(quantity);
+    public boolean hasPromotion() {
+        return promotion.isActive();
     }
 
     public String getName() {

@@ -2,7 +2,6 @@ package store.view;
 
 import java.util.List;
 import store.domain.Product;
-import store.domain.Promotion;
 
 public class OutputView {
 
@@ -19,11 +18,11 @@ public class OutputView {
     }
 
     private static void showProduct(Product product) {
-        if (product.getPromotion().equals(Promotion.NONE)) {
+        if (product.hasPromotion()) {
+            showPromotionProduct(product);
             showNonPromotionProduct(product);
             return;
         }
-        showPromotionProduct(product);
         showNonPromotionProduct(product);
     }
 
