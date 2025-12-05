@@ -12,7 +12,6 @@ public class OutputView {
         System.out.println("""
                 안녕하세요. w편의점입니다.
                 현재 보유하고 있는 상품입니다.
-                
                 """);
         products.forEach(OutputView::showProduct);
     }
