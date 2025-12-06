@@ -8,7 +8,7 @@ public class Product {
     private final Inventory inventory;
 
     public static Product of(String name, int price, Promotion promotion, int quantity) {
-        if (promotion.isActive()) {
+        if (promotion.exists()) {
             return new Product(name, price, promotion, new Inventory(quantity, 0));
         }
         return new Product(name, price, promotion, new Inventory(0, quantity));
@@ -22,7 +22,7 @@ public class Product {
     }
 
     public void addQuantityByPromotionType(int quantity, Promotion promotion) {
-        if (promotion.isActive()) {
+        if (promotion.exists()) {
             inventory.addPromotionQuantity(quantity);
             return;
         }
@@ -30,7 +30,7 @@ public class Product {
     }
 
     public boolean hasPromotion() {
-        return promotion.isActive();
+        return promotion.exists();
     }
 
     public String getName() {

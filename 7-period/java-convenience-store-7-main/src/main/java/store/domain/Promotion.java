@@ -12,7 +12,7 @@ public class Promotion {
     private final PromotionType type;
 
     public enum PromotionType {
-        ACTIVE, NONE
+        EXISTENT, NONE
     }
 
     public static Promotion none() {
@@ -22,7 +22,7 @@ public class Promotion {
 
     public static Promotion of(String name, String buy, String get, String startDate, String endDate) {
         return new Promotion(name, Integer.parseInt(buy), Integer.parseInt(get),
-                LocalDate.parse(startDate), LocalDate.parse(endDate), PromotionType.ACTIVE);
+                LocalDate.parse(startDate), LocalDate.parse(endDate), PromotionType.EXISTENT);
     }
 
     public Promotion(String name, int buy, int get,
@@ -39,8 +39,19 @@ public class Promotion {
         return this.name.equals(promotionName);
     }
 
-    public boolean isActive() {
-        return type == PromotionType.ACTIVE;
+    public boolean isActive(LocalDate date) {
+        return exists()
+                && (date.isAfter(startDate) || date.isEqual(startDate))
+                && (date.isBefore(endDate) || date.isEqual(endDate));
+    }
+
+    public boolean exists() {
+        return type == PromotionType.EXISTENT;
+    }
+
+    public boolean canGetFreeProduct(int purchasedQuantity, int promotionQuantity) {
+        return purchasedQuantity % (buy + get) == buy
+                && promotionQuantity >= purchasedQuantity;
     }
 
     public String getName() {
