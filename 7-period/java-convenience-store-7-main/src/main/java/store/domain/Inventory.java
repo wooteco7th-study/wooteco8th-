@@ -1,5 +1,7 @@
 package store.domain;
 
+import store.exception.ExceptionMessage;
+
 public class Inventory {
 
     private int promotionQuantity;
@@ -24,5 +26,28 @@ public class Inventory {
 
     public int getNonPromotionQuantity() {
         return nonPromotionQuantity;
+    }
+
+    public void minusPromotionQuantity(int purchasedQuantity) {
+        if (promotionQuantity - purchasedQuantity < 0) {
+            int purchasedQuantityAfterMinusPromotion = purchasedQuantity - promotionQuantity;
+            validateQuantity(nonPromotionQuantity, purchasedQuantityAfterMinusPromotion);
+            this.nonPromotionQuantity -= purchasedQuantityAfterMinusPromotion;
+            this.promotionQuantity = 0;
+            return;
+        }
+        validateQuantity(promotionQuantity, purchasedQuantity);
+        this.promotionQuantity -= purchasedQuantity;
+    }
+
+    public void minusNonPromotionQuantity(int purchasedQuantity) {
+        validateQuantity(nonPromotionQuantity, purchasedQuantity);
+        this.nonPromotionQuantity -= purchasedQuantity;
+    }
+
+    private void validateQuantity(int savedQuantity, int purchasedQuantity) {
+        if (savedQuantity - purchasedQuantity < 0) {
+            throw new IllegalArgumentException(ExceptionMessage.OUT_OF_STOCK.getMessage());
+        }
     }
 }
