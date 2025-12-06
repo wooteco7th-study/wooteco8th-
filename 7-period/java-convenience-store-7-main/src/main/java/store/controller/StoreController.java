@@ -44,7 +44,7 @@ public class StoreController {
     private void readAnswerOfFreeProduct(Order order) {
         AnswerCommand answerCommand = InputView.readAnswerOfFreeProduct(order.getProduct().getName());
         if (answerCommand.equals(AnswerCommand.Y)) {
-            order.getProduct().getInventory().minusPromotionQuantity(order.getPurchasedQuantity() + order.getPromotion().getGet());
+            order.getProduct().getInventory().minusPromotionQuantity(order.getPurchasedQuantity() + order.getPromotion().getGetQuantity());
             return;
         }
         order.getProduct().getInventory().minusPromotionQuantity(order.getPurchasedQuantity());

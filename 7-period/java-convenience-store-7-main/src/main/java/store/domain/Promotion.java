@@ -5,8 +5,8 @@ import java.time.LocalDate;
 public class Promotion {
 
     private final String name;
-    private final int buy;
-    private final int get;
+    private final int buyQuantity;
+    private final int getQuantity;
     private final LocalDate startDate;
     private final LocalDate endDate;
     private final PromotionType type;
@@ -20,16 +20,16 @@ public class Promotion {
                 LocalDate.MIN, LocalDate.MIN, PromotionType.NONE);
     }
 
-    public static Promotion of(String name, String buy, String get, String startDate, String endDate) {
-        return new Promotion(name, Integer.parseInt(buy), Integer.parseInt(get),
+    public static Promotion of(String name, String buyQuantity, String getQuantity, String startDate, String endDate) {
+        return new Promotion(name, Integer.parseInt(buyQuantity), Integer.parseInt(getQuantity),
                 LocalDate.parse(startDate), LocalDate.parse(endDate), PromotionType.EXISTENT);
     }
 
-    public Promotion(String name, int buy, int get,
+    public Promotion(String name, int buyQuantity, int getQuantity,
                      LocalDate startDate, LocalDate endDate, PromotionType type) {
         this.name = name;
-        this.buy = buy;
-        this.get = get;
+        this.buyQuantity = buyQuantity;
+        this.getQuantity = getQuantity;
         this.startDate = startDate;
         this.endDate = endDate;
         this.type = type;
@@ -47,10 +47,11 @@ public class Promotion {
 
     public boolean exists() {
         return type == PromotionType.EXISTENT;
+
     }
 
     public boolean canGetFreeProduct(int purchasedQuantity, int promotionQuantity) {
-        return purchasedQuantity % (buy + get) == buy
+        return purchasedQuantity % (buyQuantity + getQuantity) == buyQuantity
                 && promotionQuantity >= purchasedQuantity;
     }
 
@@ -58,7 +59,7 @@ public class Promotion {
         return name;
     }
 
-    public int getGet() {
-        return get;
+    public int getGetQuantity() {
+        return getQuantity;
     }
 }
