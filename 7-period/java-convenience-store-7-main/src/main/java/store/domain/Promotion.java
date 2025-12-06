@@ -59,6 +59,10 @@ public class Promotion {
         return name;
     }
 
+    public int getBuyQuantity() {
+        return buyQuantity;
+    }
+
     public int getGetQuantity() {
         return getQuantity;
     }

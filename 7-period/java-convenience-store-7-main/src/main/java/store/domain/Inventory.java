@@ -29,7 +29,7 @@ public class Inventory {
     }
 
     public void minusPromotionQuantity(int purchasedQuantity) {
-        if (promotionQuantity - purchasedQuantity < 0) {
+        if (hasInsufficientPromotionQuantity(purchasedQuantity)) {
             int purchasedQuantityAfterMinusPromotion = purchasedQuantity - promotionQuantity;
             validateQuantity(nonPromotionQuantity, purchasedQuantityAfterMinusPromotion);
             this.nonPromotionQuantity -= purchasedQuantityAfterMinusPromotion;
@@ -38,6 +38,10 @@ public class Inventory {
         }
         validateQuantity(promotionQuantity, purchasedQuantity);
         this.promotionQuantity -= purchasedQuantity;
+    }
+
+    public boolean hasInsufficientPromotionQuantity(int purchasedQuantity) {
+        return promotionQuantity - purchasedQuantity < 0;
     }
 
     public void minusNonPromotionQuantity(int purchasedQuantity) {

@@ -47,4 +47,9 @@ public class Order {
     public int getProductPromotionQuantity() {
         return product.getInventory().getPromotionQuantity();
     }
+
+    public int getInsufficientQuantity() {
+        int totalQuantity = getPromotion().getBuyQuantity() + getPromotion().getGetQuantity();
+        return purchasedQuantity - (totalQuantity * (getProductPromotionQuantity() / totalQuantity));
+    }
 }

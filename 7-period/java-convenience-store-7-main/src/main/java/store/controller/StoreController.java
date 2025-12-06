@@ -28,17 +28,17 @@ public class StoreController {
         if (order.isActivePromotion(orderDate)) {
             Promotion promotion = order.getPromotion();
             checkFreeProduct(order, promotion);
+            checkDiscountPossible(order);
             return;
         }
         order.getProduct().getInventory().minusNonPromotionQuantity(order.getPurchasedQuantity());
     }
 
     private void checkFreeProduct(Order order, Promotion promotion) {
-        if (order.canGetFreeProduct(promotion)) {
-            readAnswerOfFreeProduct(order);
+        if (!order.canGetFreeProduct(promotion)) {
             return;
         }
-        order.getProduct().getInventory().minusPromotionQuantity(order.getPurchasedQuantity());
+        readAnswerOfFreeProduct(order);
     }
 
     private void readAnswerOfFreeProduct(Order order) {
@@ -48,6 +48,24 @@ public class StoreController {
             return;
         }
         order.getProduct().getInventory().minusPromotionQuantity(order.getPurchasedQuantity());
+    }
+
+    private void checkDiscountPossible(Order order) {
+        if (!order.getProduct().getInventory().hasInsufficientPromotionQuantity(order.getPurchasedQuantity())) {
+            return;
+        }
+        int insufficientQuantity = order.getInsufficientQuantity();
+        readAnswerOfFullPrice(order, insufficientQuantity);
+    }
+
+    private void readAnswerOfFullPrice(Order order, int insufficientQuantity) {
+        AnswerCommand answerCommand = InputView.readAnswerOfFullPrice(order.getProduct().getName(), insufficientQuantity);
+        if (answerCommand.equals(AnswerCommand.Y)) {
+            //TODO: 할인 없이 정가 금액 만큼 처리 필요
+            order.getProduct().getInventory().minusPromotionQuantity(order.getPurchasedQuantity());
+            return;
+        }
+        order.getProduct().getInventory().minusPromotionQuantity(order.getPurchasedQuantity() - insufficientQuantity);
     }
 
     private List<Order> createOrders(Products products) {
