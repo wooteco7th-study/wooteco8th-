@@ -57,4 +57,8 @@ public class Promotion {
     public String getName() {
         return name;
     }
+
+    public int getGet() {
+        return get;
+    }
 }

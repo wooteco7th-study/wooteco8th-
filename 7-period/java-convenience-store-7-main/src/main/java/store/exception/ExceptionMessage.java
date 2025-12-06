@@ -7,6 +7,7 @@ public enum ExceptionMessage {
     INVALID_PRODUCT_QUANTITY_FORMAT("잘못된 상품 및 수량 입력 형식입니다."),
     PRODUCT_NOT_FOUND("존재하지 않는 상품입니다."),
     INVALID_PURCHASED_QUANTITY("최소 1개 이상 구매 가능합니다."),
+    ANSWER_COMMAND_NOT_FOUND("잘못된 명령어 입니다."),
     OUT_OF_STOCK("재고가 모두 소진되었습니다."),
     ;
     private final String message;

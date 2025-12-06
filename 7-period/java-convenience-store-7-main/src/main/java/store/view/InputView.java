@@ -2,6 +2,7 @@ package store.view;
 
 import camp.nextstep.edu.missionutils.Console;
 import java.util.regex.Pattern;
+import store.domain.AnswerCommand;
 import store.exception.ExceptionMessage;
 
 public class InputView {
@@ -25,6 +26,16 @@ public class InputView {
         }
     }
 
+    public static AnswerCommand readAnswerOfFreeProduct(String productName) {
+        String message = "현재 " + productName + "은(는) 1개를 무료로 더 받을 수 있습니다. 추가하시겠습니까? (Y/N)";
+        return readCommand(message);
+    }
+
+
+    private static AnswerCommand readCommand(String message) {
+        System.out.println(message);
+        return AnswerCommand.from(readLine());
+    }
 
     private static String readLine() {
         String input = Console.readLine().strip();

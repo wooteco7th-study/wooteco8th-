@@ -1,5 +1,6 @@
 package store.domain;
 
+import java.time.LocalDate;
 import store.exception.ExceptionMessage;
 
 public class Order {
@@ -20,5 +21,30 @@ public class Order {
         if (purchasedQuantity < MIN_QUANTITY) {
             throw new IllegalArgumentException(ExceptionMessage.INVALID_PURCHASED_QUANTITY.getMessage());
         }
+    }
+
+    public boolean isActivePromotion(LocalDate orderDate) {
+        Promotion promotion = product.getPromotion();
+        return promotion.isActive(orderDate);
+    }
+
+    public boolean canGetFreeProduct(Promotion promotion) {
+        return promotion.canGetFreeProduct(purchasedQuantity, getProductPromotionQuantity());
+    }
+
+    public Product getProduct() {
+        return product;
+    }
+
+    public Promotion getPromotion() {
+        return product.getPromotion();
+    }
+
+    public int getPurchasedQuantity() {
+        return purchasedQuantity;
+    }
+
+    public int getProductPromotionQuantity() {
+        return product.getInventory().getPromotionQuantity();
     }
 }
