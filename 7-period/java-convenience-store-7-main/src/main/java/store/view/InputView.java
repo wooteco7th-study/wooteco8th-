@@ -33,7 +33,7 @@ public class InputView {
 
 
     public static AnswerCommand readAnswerOfFullPrice(String productName, int insufficientQuantity) {
-        String messageFormat = "\n현재 %s %d개는 프로모션 할인이 적용되지 않습니다. 그래도  구매하시겠습니까?(Y/N)";
+        String messageFormat = "\n현재 %s %d개는 프로모션 할인이 적용되지 않습니다. 그래도 구매하시겠습니까?(Y/N)";
         return readCommand(messageFormat.formatted(productName, insufficientQuantity));
     }
 

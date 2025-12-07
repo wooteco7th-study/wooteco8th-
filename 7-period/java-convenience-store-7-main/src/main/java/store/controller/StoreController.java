@@ -22,23 +22,32 @@ public class StoreController {
         List<Order> orders = createOrders(products);
         List<FreeProductResult> freeProducts = new ArrayList<>();
         List<PurchasedProductResult> purchasedProducts = new ArrayList<>();
+        int sumOfNonPromotionProducts = 0;
         for (Order order : orders) {
             FreeProductResult freeProductResult = process(order);
             if (freeProductResult == null || freeProductResult.totalQuantity() == 0) {
                 purchasedProducts.add(PurchasedProductResult.from(order));
+                sumOfNonPromotionProducts += order.getPurchasedQuantity() * order.getProduct().getPrice();
                 continue;
             }
             freeProducts.add(freeProductResult);
-            if (freeProductResult != null && freeProductResult.freeProductQuantityByManual() > 0) {
+            if (freeProductResult.freeProductQuantityByManual() > 0) {
                 purchasedProducts.add(PurchasedProductResult.of(order, order.getPromotion().getGetQuantity()));
                 continue;
             }
             purchasedProducts.add(PurchasedProductResult.from(order));
+//            sumOfNonPromotionProducts += (order.getPurchasedQuantity() - freeProductResult.totalQuantity()) * order.getProduct().getPrice();
         }
         PurchasedProductsResult purchasedProductsResult = new PurchasedProductsResult(purchasedProducts);
         FreeProductsResult freeProductsResult = new FreeProductsResult(freeProducts);
-        OutputView.showReceipt(purchasedProductsResult, freeProductsResult);
-        System.out.println();
+
+        int membershipDiscount = 0;
+        AnswerCommand answerOfMembership = InputView.readMembership();
+        if (answerOfMembership.equals(AnswerCommand.Y)) {
+            int discount = sumOfNonPromotionProducts * 30 / 100;
+            membershipDiscount = Math.min(8000, discount);
+        }
+        OutputView.showReceipt(purchasedProductsResult, freeProductsResult, membershipDiscount);
     }
 
     private FreeProductResult process(Order order) {
@@ -49,7 +58,7 @@ public class StoreController {
             Promotion promotion = order.getPromotion();
             int freeProductQuantityByManual = checkFreeProduct(order, promotion);
             checkDiscountPossible(order);
-            return FreeProductResult.from(order.getProduct().getName(), freeProductQuantityByAuto, freeProductQuantityByManual);
+            return FreeProductResult.from(order.getProduct(), freeProductQuantityByAuto, freeProductQuantityByManual);
         }
         order.getProduct().getInventory().minusNonPromotionQuantity(order.getPurchasedQuantity());
         return null;
@@ -83,7 +92,6 @@ public class StoreController {
     private void readAnswerOfFullPrice(Order order, int insufficientQuantity) {
         AnswerCommand answerCommand = InputView.readAnswerOfFullPrice(order.getProduct().getName(), insufficientQuantity);
         if (answerCommand.equals(AnswerCommand.Y)) {
-            //TODO: 할인 없이 정가 금액 만큼 처리 필요
             order.getProduct().getInventory().minusPromotionQuantity(order.getPurchasedQuantity());
             return;
         }

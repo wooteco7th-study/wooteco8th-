@@ -59,10 +59,35 @@ public class OutputView {
         return quantity + "개";
     }
 
-    public static void showReceipt(PurchasedProductsResult purchasedProductsResult, FreeProductsResult freeProductsResult) {
+    public static void showReceipt(PurchasedProductsResult purchasedProductsResult, FreeProductsResult freeProductsResult, int membershipDiscount) {
         System.out.println(NEW_LINE + "===========W 편의점=============");
         showPurchasedProducts(purchasedProductsResult);
         showFreeProducts(freeProductsResult);
+
+        System.out.println("=============================");
+        String format = """
+                총구매액            %d     %,d
+                행사할인                   -%,d
+                멤버십할인                  -%,d
+                내실돈                    %,d
+                """;
+        int totalQuantity = 0;
+        int totalPrice = 0;
+        for (PurchasedProductResult purchasedProductResult : purchasedProductsResult.purchasedProductResults()) {
+            totalQuantity += purchasedProductResult.quantity();
+            totalPrice += purchasedProductResult.price();
+        }
+        int promotionDiscountAmount = 0;
+        for (FreeProductResult freeProductResult : freeProductsResult.freeProductsResult()) {
+            promotionDiscountAmount += freeProductResult.price();
+        }
+
+        System.out.println(format.formatted(
+                totalQuantity, totalPrice,
+                promotionDiscountAmount,
+                membershipDiscount,
+                totalPrice - promotionDiscountAmount - membershipDiscount
+        ));
     }
 
     private static void showPurchasedProducts(PurchasedProductsResult purchasedProductsResult) {
