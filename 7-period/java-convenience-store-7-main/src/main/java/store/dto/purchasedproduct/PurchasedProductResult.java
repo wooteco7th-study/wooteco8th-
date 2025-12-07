@@ -10,8 +10,16 @@ public record PurchasedProductResult(
     public static PurchasedProductResult from(Order order) {
         return new PurchasedProductResult(
                 order.getProduct().getName(),
-                order.getPurchasedQuantity(), //FIX free product 포함시켜야 함
-                order.calculatePurchasedPrice()
+                order.getPurchasedQuantity(),
+                order.calculatePurchasedPrice(order.getPurchasedQuantity())
+        );
+    }
+
+    public static PurchasedProductResult of(Order order, int getQuantity) {
+        return new PurchasedProductResult(
+                order.getProduct().getName(),
+                order.getPurchasedQuantity() + getQuantity,
+                order.calculatePurchasedPrice(order.getPurchasedQuantity() + getQuantity)
         );
     }
 }

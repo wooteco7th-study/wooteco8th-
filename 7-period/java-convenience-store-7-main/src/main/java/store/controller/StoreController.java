@@ -9,6 +9,7 @@ import store.domain.Products;
 import store.domain.Promotion;
 import store.dto.freeproduct.FreeProductResult;
 import store.dto.freeproduct.FreeProductsResult;
+import store.dto.purchasedproduct.PurchasedProductResult;
 import store.dto.purchasedproduct.PurchasedProductsResult;
 import store.util.Parser;
 import store.view.InputView;
@@ -20,14 +21,21 @@ public class StoreController {
         OutputView.showInventory(products.findAll());
         List<Order> orders = createOrders(products);
         List<FreeProductResult> freeProducts = new ArrayList<>();
+        List<PurchasedProductResult> purchasedProducts = new ArrayList<>();
         for (Order order : orders) {
             FreeProductResult freeProductResult = process(order);
-            if (freeProductResult == null) {
+            if (freeProductResult == null || freeProductResult.totalQuantity() == 0) {
+                purchasedProducts.add(PurchasedProductResult.from(order));
                 continue;
             }
             freeProducts.add(freeProductResult);
+            if (freeProductResult != null && freeProductResult.freeProductQuantityByManual() > 0) {
+                purchasedProducts.add(PurchasedProductResult.of(order, order.getPromotion().getGetQuantity()));
+                continue;
+            }
+            purchasedProducts.add(PurchasedProductResult.from(order));
         }
-        PurchasedProductsResult purchasedProductsResult = PurchasedProductsResult.from(orders);
+        PurchasedProductsResult purchasedProductsResult = new PurchasedProductsResult(purchasedProducts);
         FreeProductsResult freeProductsResult = new FreeProductsResult(freeProducts);
         OutputView.showReceipt(purchasedProductsResult, freeProductsResult);
         System.out.println();
@@ -37,31 +45,31 @@ public class StoreController {
         LocalDate orderDate = LocalDate.now();
         //TODO: 재고 파악 first?
         if (order.isActivePromotion(orderDate)) {
-            int freeProductQuantity = order.calculateFreeProductQuantity();
+            int freeProductQuantityByAuto = order.calculateFreeProductQuantity();
             Promotion promotion = order.getPromotion();
-            freeProductQuantity += checkFreeProduct(order, promotion);
+            int freeProductQuantityByManual = checkFreeProduct(order, promotion);
             checkDiscountPossible(order);
-            return FreeProductResult.from(order.getProduct().getName(), freeProductQuantity);
+            return FreeProductResult.from(order.getProduct().getName(), freeProductQuantityByAuto, freeProductQuantityByManual);
         }
         order.getProduct().getInventory().minusNonPromotionQuantity(order.getPurchasedQuantity());
         return null;
     }
 
     private int checkFreeProduct(Order order, Promotion promotion) {
-        if (!order.canGetFreeProduct(promotion)) {
-            return 0;
+        if (order.canGetFreeProduct(promotion) && isYesOfFreeProduct(order)) {
+            return order.getPromotion().getGetQuantity();
         }
-        return readAnswerOfFreeProduct(order);
+        return 0;
     }
 
-    private int readAnswerOfFreeProduct(Order order) {
+    private boolean isYesOfFreeProduct(Order order) {
         AnswerCommand answerCommand = InputView.readAnswerOfFreeProduct(order.getProduct().getName());
         if (answerCommand.equals(AnswerCommand.Y)) {
             order.getProduct().getInventory().minusPromotionQuantity(order.getPurchasedQuantity() + order.getPromotion().getGetQuantity());
-            return order.getPromotion().getGetQuantity();
+            return true;
         }
         order.getProduct().getInventory().minusPromotionQuantity(order.getPurchasedQuantity());
-        return 0;
+        return false;
     }
 
     private void checkDiscountPossible(Order order) {

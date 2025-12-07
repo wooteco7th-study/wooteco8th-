@@ -8,7 +8,7 @@ public record PurchasedProductsResult(
 ) {
     public static PurchasedProductsResult from(List<Order> orders) {
         List<PurchasedProductResult> purchasedProductResults = orders.stream()
-                .map(PurchasedProductResult::from)
+                .map(order -> PurchasedProductResult.from(order))
                 .toList();
         return new PurchasedProductsResult(purchasedProductResults);
     }

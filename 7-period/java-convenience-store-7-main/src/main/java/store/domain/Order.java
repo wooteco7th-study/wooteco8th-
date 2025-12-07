@@ -53,7 +53,7 @@ public class Order {
         return purchasedQuantity - (totalQuantity * (getProductPromotionQuantity() / totalQuantity));
     }
 
-    public int calculatePurchasedPrice() {
+    public int calculatePurchasedPrice(int purchasedQuantity) {
         return product.getPrice() * purchasedQuantity;
     }
 

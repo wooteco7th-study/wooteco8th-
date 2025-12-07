@@ -82,7 +82,7 @@ public class OutputView {
         for (FreeProductResult freeProductResult : freeProductsResult.freeProductsResult()) {
             System.out.println(format.formatted(
                     freeProductResult.name(),
-                    freeProductResult.quantity()
+                    freeProductResult.totalQuantity()
             ));
         }
     }
