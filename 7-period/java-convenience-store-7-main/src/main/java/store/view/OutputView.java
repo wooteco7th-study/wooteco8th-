@@ -2,6 +2,10 @@ package store.view;
 
 import java.util.List;
 import store.domain.Product;
+import store.dto.freeproduct.FreeProductResult;
+import store.dto.freeproduct.FreeProductsResult;
+import store.dto.purchasedproduct.PurchasedProductResult;
+import store.dto.purchasedproduct.PurchasedProductsResult;
 
 public class OutputView {
 
@@ -53,5 +57,33 @@ public class OutputView {
             return "재고 없음";
         }
         return quantity + "개";
+    }
+
+    public static void showReceipt(PurchasedProductsResult purchasedProductsResult, FreeProductsResult freeProductsResult) {
+        System.out.println(NEW_LINE + "===========W 편의점=============");
+        showPurchasedProducts(purchasedProductsResult);
+        showFreeProducts(freeProductsResult);
+    }
+
+    private static void showPurchasedProducts(PurchasedProductsResult purchasedProductsResult) {
+        System.out.println("상품명            수량      금액");
+        String format = "%s          %d    %,d"; //TODO 포맷 공백 정렬
+        for (PurchasedProductResult purchasedProductResult : purchasedProductsResult.purchasedProductResults()) {
+            System.out.println(format.formatted(
+                    purchasedProductResult.name(),
+                    purchasedProductResult.quantity(),
+                    purchasedProductResult.price()));
+        }
+    }
+
+    private static void showFreeProducts(FreeProductsResult freeProductsResult) {
+        System.out.println("===========증   정=============");
+        String format = "%s          %d         ";
+        for (FreeProductResult freeProductResult : freeProductsResult.freeProductsResult()) {
+            System.out.println(format.formatted(
+                    freeProductResult.name(),
+                    freeProductResult.quantity()
+            ));
+        }
     }
 }

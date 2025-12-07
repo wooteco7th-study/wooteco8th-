@@ -52,4 +52,13 @@ public class Order {
         int totalQuantity = getPromotion().getBuyQuantity() + getPromotion().getGetQuantity();
         return purchasedQuantity - (totalQuantity * (getProductPromotionQuantity() / totalQuantity));
     }
+
+    public int calculatePurchasedPrice() {
+        return product.getPrice() * purchasedQuantity;
+    }
+
+    public int calculateFreeProductQuantity() {
+        int promotionQuantity = Math.min(product.getInventory().getPromotionQuantity(), purchasedQuantity);
+        return promotionQuantity / (getPromotion().getBuyQuantity() + getPromotion().getGetQuantity());
+    }
 }
