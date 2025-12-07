@@ -37,6 +37,11 @@ public class InputView {
         return readCommand(messageFormat.formatted(productName, insufficientQuantity));
     }
 
+    public static AnswerCommand readMembership() {
+        System.out.println("멤버십 할인을 받으시겠습니까? (Y/N)");
+        return AnswerCommand.from(readLine());
+    }
+
     private static AnswerCommand readCommand(String message) {
         System.out.println(message);
         return AnswerCommand.from(readLine());
