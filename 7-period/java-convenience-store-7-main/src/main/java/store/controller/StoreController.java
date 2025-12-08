@@ -1,5 +1,6 @@
 package store.controller;
 
+import camp.nextstep.edu.missionutils.DateTimes;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -18,6 +19,12 @@ import store.view.OutputView;
 public class StoreController {
 
     public void run(Products products) {
+        do {
+            purchase(products);
+        } while (AnswerCommand.Y.equals(InputView.readAdditionalPurchase()));
+    }
+
+    public void purchase(Products products) {
         OutputView.showInventory(products.findAll());
         List<Order> orders = createOrders(products);
         List<FreeProductResult> freeProducts = new ArrayList<>();
@@ -36,7 +43,6 @@ public class StoreController {
                 continue;
             }
             purchasedProducts.add(PurchasedProductResult.from(order));
-//            sumOfNonPromotionProducts += (order.getPurchasedQuantity() - freeProductResult.totalQuantity()) * order.getProduct().getPrice();
         }
         PurchasedProductsResult purchasedProductsResult = new PurchasedProductsResult(purchasedProducts);
         FreeProductsResult freeProductsResult = new FreeProductsResult(freeProducts);
@@ -51,7 +57,7 @@ public class StoreController {
     }
 
     private FreeProductResult process(Order order) {
-        LocalDate orderDate = LocalDate.now();
+        LocalDate orderDate = DateTimes.now().toLocalDate();
         //TODO: 재고 파악 first?
         if (order.isActivePromotion(orderDate)) {
             int freeProductQuantityByAuto = order.calculateFreeProductQuantity();
@@ -83,9 +89,13 @@ public class StoreController {
 
     private void checkDiscountPossible(Order order) {
         if (!order.getProduct().getInventory().hasInsufficientPromotionQuantity(order.getPurchasedQuantity())) {
+            order.getProduct().getInventory().minusPromotionQuantity(order.getPromotion().getBuyQuantity() * order.calculateFreeProductQuantity() + order.calculateFreeProductQuantity());
             return;
         }
         int insufficientQuantity = order.getInsufficientQuantity();
+//        int productPromotionQuantity = order.getProductPromotionQuantity();
+//        order.getProduct().getInventory().minusPromotionQuantity(productPromotionQuantity);
+//        order.getProduct().getInventory().minusNonPromotionQuantity(order.getPurchasedQuantity() - productPromotionQuantity);
         readAnswerOfFullPrice(order, insufficientQuantity);
     }
 

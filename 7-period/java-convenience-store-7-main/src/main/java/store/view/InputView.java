@@ -42,6 +42,11 @@ public class InputView {
         return AnswerCommand.from(readLine());
     }
 
+    public static AnswerCommand readAdditionalPurchase() {
+        System.out.println("감사합니다. 구매하고 싶은 다른 상품이 있나요? (Y/N)");
+        return AnswerCommand.from(readLine());
+    }
+
     private static AnswerCommand readCommand(String message) {
         System.out.println(message);
         return AnswerCommand.from(readLine());
