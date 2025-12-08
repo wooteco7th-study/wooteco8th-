@@ -61,4 +61,11 @@ public class Order {
         int promotionQuantity = Math.min(product.getInventory().getPromotionQuantity(), purchasedQuantity);
         return promotionQuantity / (getPromotion().getBuyQuantity() + getPromotion().getGetQuantity());
     }
+
+    public boolean hasInsufficientQuantity() {
+        if (purchasedQuantity > getProductPromotionQuantity() + product.getInventory().getNonPromotionQuantity()) {
+            return true;
+        }
+        return false;
+    }
 }

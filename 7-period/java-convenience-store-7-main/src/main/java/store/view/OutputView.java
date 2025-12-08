@@ -9,6 +9,7 @@ import store.dto.purchasedproduct.PurchasedProductsResult;
 
 public class OutputView {
 
+    private static final String ERROR_MESSAGE_PREFIX = "[ERROR] ";
     private static final String NEW_LINE = System.lineSeparator();
     private static final String PRODUCT_FORMAT = "- %s %,d원 %s %s";
 
@@ -110,5 +111,9 @@ public class OutputView {
                     freeProductResult.totalQuantity()
             ));
         }
+    }
+
+    public static void showError(String message) {
+        System.out.println(ERROR_MESSAGE_PREFIX + message);
     }
 }

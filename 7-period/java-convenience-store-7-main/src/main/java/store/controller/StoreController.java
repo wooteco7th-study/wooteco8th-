@@ -12,7 +12,9 @@ import store.dto.freeproduct.FreeProductResult;
 import store.dto.freeproduct.FreeProductsResult;
 import store.dto.purchasedproduct.PurchasedProductResult;
 import store.dto.purchasedproduct.PurchasedProductsResult;
+import store.exception.ExceptionMessage;
 import store.util.Parser;
+import store.util.RetryHandler;
 import store.view.InputView;
 import store.view.OutputView;
 
@@ -20,13 +22,13 @@ public class StoreController {
 
     public void run(Products products) {
         do {
-            purchase(products);
+            makeOrder(products);
         } while (AnswerCommand.Y.equals(InputView.readAdditionalPurchase()));
     }
 
-    public void purchase(Products products) {
+    public void makeOrder(Products products) {
         OutputView.showInventory(products.findAll());
-        List<Order> orders = createOrders(products);
+        List<Order> orders = RetryHandler.retryOnInvalidInput(() -> createOrders(products));
         List<FreeProductResult> freeProducts = new ArrayList<>();
         List<PurchasedProductResult> purchasedProducts = new ArrayList<>();
         int sumOfNonPromotionProducts = 0;
@@ -58,7 +60,6 @@ public class StoreController {
 
     private FreeProductResult process(Order order) {
         LocalDate orderDate = DateTimes.now().toLocalDate();
-        //TODO: 재고 파악 first?
         if (order.isActivePromotion(orderDate)) {
             int freeProductQuantityByAuto = order.calculateFreeProductQuantity();
             Promotion promotion = order.getPromotion();
@@ -93,9 +94,6 @@ public class StoreController {
             return;
         }
         int insufficientQuantity = order.getInsufficientQuantity();
-//        int productPromotionQuantity = order.getProductPromotionQuantity();
-//        order.getProduct().getInventory().minusPromotionQuantity(productPromotionQuantity);
-//        order.getProduct().getInventory().minusNonPromotionQuantity(order.getPurchasedQuantity() - productPromotionQuantity);
         readAnswerOfFullPrice(order, insufficientQuantity);
     }
 
@@ -121,6 +119,10 @@ public class StoreController {
         int indexOfDash = productAndQuantity.indexOf("-");
         String productName = productAndQuantity.substring(1, indexOfDash);
         int quantity = Integer.parseInt(productAndQuantity.substring(indexOfDash + 1, productAndQuantity.length() - 1));
-        orders.add(new Order(productName, quantity, products));
+        Order order = new Order(productName, quantity, products);
+        if (order.hasInsufficientQuantity()) {
+            throw new IllegalArgumentException(ExceptionMessage.OUT_OF_STOCK.getMessage());
+        }
+        orders.add(order);
     }
 }
