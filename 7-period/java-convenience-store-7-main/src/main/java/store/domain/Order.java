@@ -13,14 +13,33 @@ public class Order {
     public Order(String productName, int purchasedQuantity, Products products) {
         this.product = products.findByName(productName)
                 .orElseThrow(() -> new IllegalArgumentException(ExceptionMessage.PRODUCT_NOT_FOUND.getMessage()));
-        validatePurchasedQuantity(purchasedQuantity);
+        validate(purchasedQuantity);
         this.purchasedQuantity = purchasedQuantity;
     }
 
+    private void validate(int purchasedQuantity) {
+        validatePurchasedQuantity(purchasedQuantity);
+        validateStock(purchasedQuantity);
+    }
+
     private void validatePurchasedQuantity(int purchasedQuantity) {
-        if (purchasedQuantity < MIN_QUANTITY) {
+        if (isLessThanMinQuantity(purchasedQuantity)) {
             throw new IllegalArgumentException(ExceptionMessage.INVALID_PURCHASED_QUANTITY.getMessage());
         }
+    }
+
+    private boolean isLessThanMinQuantity(int purchasedQuantity) {
+        return purchasedQuantity < MIN_QUANTITY;
+    }
+
+    private void validateStock(int purchasedQuantity) {
+        if (hasInsufficientStock(purchasedQuantity)) {
+            throw new IllegalArgumentException(ExceptionMessage.OUT_OF_STOCK.getMessage());
+        }
+    }
+
+    private boolean hasInsufficientStock(int purchasedQuantity) {
+        return purchasedQuantity > getProductPromotionQuantity() + product.getInventory().getNonPromotionQuantity();
     }
 
     public boolean isActivePromotion(LocalDate orderDate) {
@@ -60,12 +79,5 @@ public class Order {
     public int calculateFreeProductQuantity() {
         int promotionQuantity = Math.min(product.getInventory().getPromotionQuantity(), purchasedQuantity);
         return promotionQuantity / (getPromotion().getBuyQuantity() + getPromotion().getGetQuantity());
-    }
-
-    public boolean hasInsufficientQuantity() {
-        if (purchasedQuantity > getProductPromotionQuantity() + product.getInventory().getNonPromotionQuantity()) {
-            return true;
-        }
-        return false;
     }
 }

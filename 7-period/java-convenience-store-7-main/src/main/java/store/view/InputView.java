@@ -1,27 +1,43 @@
 package store.view;
 
 import camp.nextstep.edu.missionutils.Console;
+import java.util.List;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import store.domain.AnswerCommand;
+import store.dto.OrderRequest;
 import store.exception.ExceptionMessage;
+import store.util.Parser;
 
-public class InputView {
+public final class InputView {
 
     private static final String NEW_LINE = System.lineSeparator();
-    private static final Pattern PRODUCT_QUANTITY_FORMAT = Pattern.compile("^\\[[가-힣]+-\\d+\\](,\\[[가-힣]+-\\d+\\])*$");
+    private static final Pattern PRODUCT_QUANTITY_FORMAT = Pattern.compile("^\\[([가-힣]+)-(\\d+)\\]$");
+    private static final String PRODUCT_AND_QUANTITY_DELIMITER = ",";
 
     private InputView() {
     }
 
-    public static String readProductAndQuantity() {
+    public static List<OrderRequest> readProductAndQuantity() {
         System.out.println(NEW_LINE + "구매하실 상품명과 수량을 입력해 주세요.(예: [사이다-2],[감자칩-1])");
         String input = readLine();
-        validateProductAndQuantityFormat(input);
-        return input;
+        List<String> productsAndQuantities = Parser.parseByDelimiter(input, PRODUCT_AND_QUANTITY_DELIMITER);
+        return productsAndQuantities.stream()
+                .map(InputView::createOrderRequest)
+                .toList();
     }
 
-    private static void validateProductAndQuantityFormat(String input) {
-        if (!PRODUCT_QUANTITY_FORMAT.matcher(input).find()) {
+    private static OrderRequest createOrderRequest(String productAndQuantity) {
+        Matcher matcher = PRODUCT_QUANTITY_FORMAT.matcher(productAndQuantity);
+        validateProductAndQuantityFormat(matcher);
+        return new OrderRequest(
+                matcher.group(1),
+                Integer.parseInt(matcher.group(2))
+        );
+    }
+
+    private static void validateProductAndQuantityFormat(Matcher matcher) {
+        if (!matcher.matches()) {
             throw new IllegalArgumentException(ExceptionMessage.INVALID_PRODUCT_QUANTITY_FORMAT.getMessage());
         }
     }

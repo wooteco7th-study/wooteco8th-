@@ -8,12 +8,11 @@ import store.domain.AnswerCommand;
 import store.domain.Order;
 import store.domain.Products;
 import store.domain.Promotion;
+import store.dto.OrderRequest;
 import store.dto.freeproduct.FreeProductResult;
 import store.dto.freeproduct.FreeProductsResult;
 import store.dto.purchasedproduct.PurchasedProductResult;
 import store.dto.purchasedproduct.PurchasedProductsResult;
-import store.exception.ExceptionMessage;
-import store.util.Parser;
 import store.util.RetryHandler;
 import store.view.InputView;
 import store.view.OutputView;
@@ -108,21 +107,11 @@ public class StoreController {
 
     private List<Order> createOrders(Products products) {
         List<Order> orders = new ArrayList<>();
-        List<String> productsAndQuantities = Parser.parseByDelimiter(InputView.readProductAndQuantity(), ",");
-        for (String productAndQuantity : productsAndQuantities) {
-            createOrder(products, productAndQuantity, orders);
+        List<OrderRequest> requests = InputView.readProductAndQuantity();
+        for (OrderRequest request : requests) {
+            Order order = new Order(request.productName(), request.quantity(), products);
+            orders.add(order);
         }
         return orders;
-    }
-
-    private void createOrder(Products products, String productAndQuantity, List<Order> orders) {
-        int indexOfDash = productAndQuantity.indexOf("-");
-        String productName = productAndQuantity.substring(1, indexOfDash);
-        int quantity = Integer.parseInt(productAndQuantity.substring(indexOfDash + 1, productAndQuantity.length() - 1));
-        Order order = new Order(productName, quantity, products);
-        if (order.hasInsufficientQuantity()) {
-            throw new IllegalArgumentException(ExceptionMessage.OUT_OF_STOCK.getMessage());
-        }
-        orders.add(order);
     }
 }
