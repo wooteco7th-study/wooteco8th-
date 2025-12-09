@@ -7,6 +7,8 @@ import store.util.Parser;
 
 public class ProductInitializer {
 
+    private static final String DELIMITER = ",";
+
     private final Promotions promotions;
 
     public ProductInitializer(Promotions promotions) {
@@ -22,7 +24,7 @@ public class ProductInitializer {
     }
 
     private void addProductFromLine(Products products, String productLine) {
-        List<String> productInfo = Parser.parseByDelimiter(productLine);
+        List<String> productInfo = Parser.parseByDelimiter(productLine, DELIMITER);
 
         String name = productInfo.get(0);
         int price = Integer.parseInt(productInfo.get(1));

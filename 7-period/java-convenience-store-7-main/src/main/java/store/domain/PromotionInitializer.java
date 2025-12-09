@@ -8,6 +8,8 @@ import store.util.Parser;
 
 public class PromotionInitializer {
 
+    private static final String DELIMITER = ",";
+
     public Promotions initialize() {
         Promotions promotions = new Promotions();
         for (String promotion : FileReader.readPromotions()) {
@@ -17,7 +19,7 @@ public class PromotionInitializer {
     }
 
     private void addPromotionFromLine(String promotion, Promotions promotions) {
-        List<String> promotionInfo = Parser.parseByDelimiter(promotion);
+        List<String> promotionInfo = Parser.parseByDelimiter(promotion, DELIMITER);
 
         String name = promotionInfo.get(0);
         String buy = promotionInfo.get(1);

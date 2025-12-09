@@ -108,7 +108,7 @@ public class StoreController {
 
     private List<Order> createOrders(Products products) {
         List<Order> orders = new ArrayList<>();
-        List<String> productsAndQuantities = Parser.parseByDelimiter(InputView.readProductAndQuantity());
+        List<String> productsAndQuantities = Parser.parseByDelimiter(InputView.readProductAndQuantity(), ",");
         for (String productAndQuantity : productsAndQuantities) {
             createOrder(products, productAndQuantity, orders);
         }
