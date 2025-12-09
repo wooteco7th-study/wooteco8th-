@@ -20,11 +20,6 @@ public class Promotion {
                 LocalDate.MIN, LocalDate.MIN, PromotionType.NONE);
     }
 
-    public static Promotion of(String name, String buyQuantity, String getQuantity, String startDate, String endDate) {
-        return new Promotion(name, Integer.parseInt(buyQuantity), Integer.parseInt(getQuantity),
-                LocalDate.parse(startDate), LocalDate.parse(endDate), PromotionType.EXISTENT);
-    }
-
     public Promotion(String name, int buyQuantity, int getQuantity,
                      LocalDate startDate, LocalDate endDate, PromotionType type) {
         this.name = name;

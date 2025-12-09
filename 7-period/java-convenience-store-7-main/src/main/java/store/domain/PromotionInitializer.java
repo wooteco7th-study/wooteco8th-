@@ -1,7 +1,9 @@
 package store.domain;
 
+import java.time.LocalDate;
 import java.util.List;
 import store.FileReader;
+import store.exception.ExceptionMessage;
 import store.util.Parser;
 
 public class PromotionInitializer {
@@ -14,7 +16,7 @@ public class PromotionInitializer {
         return promotions;
     }
 
-    private static void addPromotionFromLine(String promotion, Promotions promotions) {
+    private void addPromotionFromLine(String promotion, Promotions promotions) {
         List<String> promotionInfo = Parser.parseByDelimiter(promotion);
 
         String name = promotionInfo.get(0);
@@ -23,6 +25,18 @@ public class PromotionInitializer {
         String startDate = promotionInfo.get(3);
         String endDate = promotionInfo.get(4);
 
-        promotions.add(Promotion.of(name, buy, get, startDate, endDate));
+        promotions.add(createPromotion(name, buy, get, startDate, endDate));
+    }
+
+    private Promotion createPromotion(String name, String buyQuantity, String getQuantity,
+                                      String startDate, String endDate) {
+        try {
+            return new Promotion(name,
+                    Integer.parseInt(buyQuantity), Integer.parseInt(getQuantity),
+                    LocalDate.parse(startDate), LocalDate.parse(endDate),
+                    Promotion.PromotionType.EXISTENT);
+        } catch (RuntimeException runtimeException) {
+            throw new IllegalArgumentException(ExceptionMessage.INVALID_FILE_CONTENT.getMessage());
+        }
     }
 }
