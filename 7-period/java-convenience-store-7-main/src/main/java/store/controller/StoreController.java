@@ -3,6 +3,7 @@ package store.controller;
 import java.util.ArrayList;
 import java.util.List;
 import store.domain.AnswerCommand;
+import store.domain.MembershipDiscountPolicy;
 import store.domain.Order;
 import store.domain.Products;
 import store.domain.Promotion;
@@ -61,12 +62,7 @@ public class StoreController {
         PurchasedProductsResult purchasedProductsResult = new PurchasedProductsResult(purchasedProducts);
         FreeProductsResult freeProductsResult = new FreeProductsResult(freeProducts);
 
-        int membershipDiscount = 0;
-        AnswerCommand answerOfMembership = InputView.readMembership();
-        if (answerOfMembership.equals(AnswerCommand.Y)) {
-            int discount = sumOfNonPromotionProducts * 30 / 100;
-            membershipDiscount = Math.min(8000, discount);
-        }
+        int membershipDiscount = processMembershipDiscount(sumOfNonPromotionProducts);
         OutputView.showReceipt(purchasedProductsResult, freeProductsResult, membershipDiscount);
     }
 
@@ -115,6 +111,13 @@ public class StoreController {
             return;
         }
         order.getProduct().getInventory().minusPromotionQuantity(order.getPurchasedQuantity() - insufficientQuantity);
+    }
+
+    private int processMembershipDiscount(int sumOfNonPromotionAmounts) {
+        MembershipDiscountPolicy membershipDiscountPolicy = new MembershipDiscountPolicy();
+        boolean useMembership = RetryHandler.retryOnInvalidInput(InputView::readMembership)
+                .isYes();
+        return membershipDiscountPolicy.discount(useMembership, sumOfNonPromotionAmounts);
     }
 
     private boolean wantAdditionalOrder() {
