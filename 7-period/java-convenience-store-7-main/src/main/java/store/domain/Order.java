@@ -1,5 +1,6 @@
 package store.domain;
 
+import camp.nextstep.edu.missionutils.DateTimes;
 import java.time.LocalDate;
 import store.exception.ExceptionMessage;
 
@@ -9,12 +10,14 @@ public class Order {
 
     private final Product product;
     private final int purchasedQuantity;
+    private final LocalDate orderDate;
 
     public Order(String productName, int purchasedQuantity, Products products) {
         this.product = products.findByName(productName)
                 .orElseThrow(() -> new IllegalArgumentException(ExceptionMessage.PRODUCT_NOT_FOUND.getMessage()));
         validate(purchasedQuantity);
         this.purchasedQuantity = purchasedQuantity;
+        this.orderDate = DateTimes.now().toLocalDate();
     }
 
     private void validate(int purchasedQuantity) {
@@ -42,13 +45,21 @@ public class Order {
         return purchasedQuantity > getProductPromotionQuantity() + product.getInventory().getNonPromotionQuantity();
     }
 
-    public boolean isActivePromotion(LocalDate orderDate) {
+    public boolean hasInactivePromotion() {
+        return !hasActivePromotion();
+    }
+
+    public boolean hasActivePromotion() {
         Promotion promotion = product.getPromotion();
         return promotion.isActive(orderDate);
     }
 
     public boolean canGetFreeProduct(Promotion promotion) {
         return promotion.canGetFreeProduct(purchasedQuantity, getProductPromotionQuantity());
+    }
+
+    public String getProductName() {
+        return product.getName();
     }
 
     public Product getProduct() {
@@ -63,6 +74,10 @@ public class Order {
         return purchasedQuantity;
     }
 
+    public int getProductPrice() {
+        return product.getPrice();
+    }
+
     public int getProductPromotionQuantity() {
         return product.getInventory().getPromotionQuantity();
     }
@@ -72,12 +87,16 @@ public class Order {
         return purchasedQuantity - (totalQuantity * (getProductPromotionQuantity() / totalQuantity));
     }
 
-    public int calculatePurchasedPrice(int purchasedQuantity) {
+    public int calculatePurchasedPrice() {
         return product.getPrice() * purchasedQuantity;
     }
 
     public int calculateFreeProductQuantity() {
         int promotionQuantity = Math.min(product.getInventory().getPromotionQuantity(), purchasedQuantity);
         return promotionQuantity / (getPromotion().getBuyQuantity() + getPromotion().getGetQuantity());
+    }
+
+    public void processNonPromotionOrder() {
+        product.minusNonPromotionQuantity(purchasedQuantity);
     }
 }

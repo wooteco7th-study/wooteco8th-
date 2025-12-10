@@ -21,4 +21,8 @@ public enum AnswerCommand {
                 .findFirst()
                 .orElseThrow(() -> new IllegalArgumentException(ExceptionMessage.ANSWER_COMMAND_NOT_FOUND.getMessage()));
     }
+
+    public boolean isYes() {
+        return this == Y;
+    }
 }

@@ -1,7 +1,5 @@
 package store.controller;
 
-import camp.nextstep.edu.missionutils.DateTimes;
-import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import store.domain.AnswerCommand;
@@ -21,16 +19,31 @@ public class StoreController {
 
     public void run(Products products) {
         do {
-            makeOrder(products);
-        } while (AnswerCommand.Y.equals(InputView.readAdditionalPurchase()));
+            List<Order> orders = makeOrder(products);
+            processOrder(orders);
+        } while (wantAdditionalOrder());
     }
 
-    public void makeOrder(Products products) {
+    private List<Order> makeOrder(Products products) {
         OutputView.showInventory(products.findAll());
-        List<Order> orders = RetryHandler.retryOnInvalidInput(() -> createOrders(products));
+        return RetryHandler.retryOnInvalidInput(() -> createOrders(products));
+    }
+
+    private List<Order> createOrders(Products products) {
+        List<Order> orders = new ArrayList<>();
+        List<OrderRequest> requests = InputView.readProductAndQuantity();
+        for (OrderRequest request : requests) {
+            Order order = new Order(request.productName(), request.quantity(), products);
+            orders.add(order);
+        }
+        return orders;
+    }
+
+    private void processOrder(List<Order> orders) {
         List<FreeProductResult> freeProducts = new ArrayList<>();
         List<PurchasedProductResult> purchasedProducts = new ArrayList<>();
         int sumOfNonPromotionProducts = 0;
+
         for (Order order : orders) {
             FreeProductResult freeProductResult = process(order);
             if (freeProductResult == null || freeProductResult.totalQuantity() == 0) {
@@ -58,8 +71,7 @@ public class StoreController {
     }
 
     private FreeProductResult process(Order order) {
-        LocalDate orderDate = DateTimes.now().toLocalDate();
-        if (order.isActivePromotion(orderDate)) {
+        if (order.hasActivePromotion()) {
             int freeProductQuantityByAuto = order.calculateFreeProductQuantity();
             Promotion promotion = order.getPromotion();
             int freeProductQuantityByManual = checkFreeProduct(order, promotion);
@@ -105,13 +117,8 @@ public class StoreController {
         order.getProduct().getInventory().minusPromotionQuantity(order.getPurchasedQuantity() - insufficientQuantity);
     }
 
-    private List<Order> createOrders(Products products) {
-        List<Order> orders = new ArrayList<>();
-        List<OrderRequest> requests = InputView.readProductAndQuantity();
-        for (OrderRequest request : requests) {
-            Order order = new Order(request.productName(), request.quantity(), products);
-            orders.add(order);
-        }
-        return orders;
+    private boolean wantAdditionalOrder() {
+        AnswerCommand answerCommand = RetryHandler.retryOnInvalidInput(InputView::readAdditionalPurchase);
+        return answerCommand.isYes();
     }
 }

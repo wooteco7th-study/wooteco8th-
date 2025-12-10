@@ -9,17 +9,19 @@ public record PurchasedProductResult(
 ) {
     public static PurchasedProductResult from(Order order) {
         return new PurchasedProductResult(
-                order.getProduct().getName(),
+                order.getProductName(),
                 order.getPurchasedQuantity(),
-                order.calculatePurchasedPrice(order.getPurchasedQuantity())
+                order.calculatePurchasedPrice()
         );
     }
 
     public static PurchasedProductResult of(Order order, int getQuantity) {
+        int finalQuantity = order.getPurchasedQuantity() + getQuantity;
+        int finalPrice = order.getProductPrice() * finalQuantity;
         return new PurchasedProductResult(
-                order.getProduct().getName(),
-                order.getPurchasedQuantity() + getQuantity,
-                order.calculatePurchasedPrice(order.getPurchasedQuantity() + getQuantity)
+                order.getProductName(),
+                finalQuantity,
+                finalPrice
         );
     }
 }

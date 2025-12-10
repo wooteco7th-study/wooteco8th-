@@ -92,8 +92,10 @@ public class OutputView {
     }
 
     private static void showPurchasedProducts(PurchasedProductsResult purchasedProductsResult) {
-        System.out.println("상품명            수량      금액");
-        String format = "%s          %d    %,d"; //TODO 포맷 공백 정렬
+        String header = "%-15s %4s %10s%n";
+        String format = "%-15s %4d %,10d";
+
+        System.out.printf(header, "상품명", "수량", "금액");
         for (PurchasedProductResult purchasedProductResult : purchasedProductsResult.purchasedProductResults()) {
             System.out.println(format.formatted(
                     purchasedProductResult.name(),

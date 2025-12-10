@@ -33,6 +33,10 @@ public class Product {
         return promotion.exists();
     }
 
+    public void minusNonPromotionQuantity(int purchasedQuantity) {
+        inventory.minusNonPromotionQuantity(purchasedQuantity);
+    }
+
     public String getName() {
         return name;
     }

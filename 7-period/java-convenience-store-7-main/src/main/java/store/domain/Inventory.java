@@ -41,7 +41,7 @@ public class Inventory {
     }
 
     public boolean hasInsufficientPromotionQuantity(int purchasedQuantity) {
-        return promotionQuantity - purchasedQuantity < 0;
+        return promotionQuantity < purchasedQuantity;
     }
 
     public void minusNonPromotionQuantity(int purchasedQuantity) {
@@ -50,7 +50,7 @@ public class Inventory {
     }
 
     private void validateQuantity(int savedQuantity, int purchasedQuantity) {
-        if (savedQuantity - purchasedQuantity < 0) {
+        if (savedQuantity < purchasedQuantity) {
             throw new IllegalArgumentException(ExceptionMessage.OUT_OF_STOCK.getMessage());
         }
     }
