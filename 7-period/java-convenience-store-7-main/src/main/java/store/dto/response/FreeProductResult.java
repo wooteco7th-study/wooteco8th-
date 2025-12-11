@@ -1,4 +1,4 @@
-package store.dto.freeproduct;
+package store.dto.response;
 
 import store.domain.Product;
 

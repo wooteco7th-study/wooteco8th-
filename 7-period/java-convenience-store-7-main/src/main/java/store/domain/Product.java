@@ -37,6 +37,10 @@ public class Product {
         inventory.minusNonPromotionQuantity(purchasedQuantity);
     }
 
+    public boolean hasSufficientPromotionQuantity(int purchasedQuantity) {
+        return inventory.hasSufficientPromotionQuantity(purchasedQuantity);
+    }
+
     public String getName() {
         return name;
     }
@@ -51,5 +55,17 @@ public class Product {
 
     public Inventory getInventory() {
         return inventory;
+    }
+
+    public int getPromotionQuantity() {
+        return inventory.getPromotionQuantity();
+    }
+
+    public int getPromotionBuyQuantity() {
+        return promotion.getBuyQuantity();
+    }
+
+    public int getPromotionGetQuantity() {
+        return promotion.getGetQuantity();
     }
 }

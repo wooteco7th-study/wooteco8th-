@@ -1,4 +1,4 @@
-package store.dto.purchasedproduct;
+package store.dto.response;
 
 import store.domain.Order;
 

@@ -49,7 +49,7 @@ public class Order {
         return !hasActivePromotion();
     }
 
-    public boolean hasActivePromotion() {
+    private boolean hasActivePromotion() {
         Promotion promotion = product.getPromotion();
         return promotion.isActive(orderDate);
     }
@@ -79,7 +79,7 @@ public class Order {
     }
 
     public int getProductPromotionQuantity() {
-        return product.getInventory().getPromotionQuantity();
+        return product.getPromotionQuantity();
     }
 
     public int getInsufficientQuantity() {
@@ -92,11 +92,19 @@ public class Order {
     }
 
     public int calculateFreeProductQuantity() {
-        int promotionQuantity = Math.min(product.getInventory().getPromotionQuantity(), purchasedQuantity);
-        return promotionQuantity / (getPromotion().getBuyQuantity() + getPromotion().getGetQuantity());
+        int promotionQuantity = Math.min(product.getPromotionQuantity(), purchasedQuantity);
+        return promotionQuantity / (product.getPromotionBuyQuantity() + product.getPromotionGetQuantity());
     }
 
     public void processNonPromotionOrder() {
         product.minusNonPromotionQuantity(purchasedQuantity);
+    }
+
+    public boolean hasSufficientPromotionQuantity() {
+        return product.hasSufficientPromotionQuantity(purchasedQuantity);
+    }
+
+    public int getPromotionGetQuantity() {
+        return product.getPromotionGetQuantity();
     }
 }

@@ -2,10 +2,9 @@ package store.view;
 
 import java.util.List;
 import store.domain.Product;
-import store.dto.freeproduct.FreeProductResult;
-import store.dto.freeproduct.FreeProductsResult;
-import store.dto.purchasedproduct.PurchasedProductResult;
-import store.dto.purchasedproduct.PurchasedProductsResult;
+import store.dto.response.FreeProductResult;
+import store.dto.response.OrderProcessResult;
+import store.dto.response.PurchasedProductResult;
 
 public class OutputView {
 
@@ -60,10 +59,10 @@ public class OutputView {
         return quantity + "개";
     }
 
-    public static void showReceipt(PurchasedProductsResult purchasedProductsResult, FreeProductsResult freeProductsResult, int membershipDiscount) {
+    public static void showReceipt(OrderProcessResult result, int membershipDiscount) {
         System.out.println(NEW_LINE + "===========W 편의점=============");
-        showPurchasedProducts(purchasedProductsResult);
-        showFreeProducts(freeProductsResult);
+        showPurchasedProducts(result.purchasedProducts());
+        showFreeProducts(result.freeProducts());
 
         System.out.println("=============================");
         String format = """
@@ -74,12 +73,12 @@ public class OutputView {
                 """;
         int totalQuantity = 0;
         int totalPrice = 0;
-        for (PurchasedProductResult purchasedProductResult : purchasedProductsResult.purchasedProductResults()) {
+        for (PurchasedProductResult purchasedProductResult : result.purchasedProducts()) {
             totalQuantity += purchasedProductResult.quantity();
             totalPrice += purchasedProductResult.price();
         }
         int promotionDiscountAmount = 0;
-        for (FreeProductResult freeProductResult : freeProductsResult.freeProductsResult()) {
+        for (FreeProductResult freeProductResult : result.freeProducts()) {
             promotionDiscountAmount += freeProductResult.price();
         }
 
@@ -91,12 +90,12 @@ public class OutputView {
         ));
     }
 
-    private static void showPurchasedProducts(PurchasedProductsResult purchasedProductsResult) {
+    private static void showPurchasedProducts(List<PurchasedProductResult> purchaseProducts) {
         String header = "%-15s %4s %10s%n";
         String format = "%-15s %4d %,10d";
 
         System.out.printf(header, "상품명", "수량", "금액");
-        for (PurchasedProductResult purchasedProductResult : purchasedProductsResult.purchasedProductResults()) {
+        for (PurchasedProductResult purchasedProductResult : purchaseProducts) {
             System.out.println(format.formatted(
                     purchasedProductResult.name(),
                     purchasedProductResult.quantity(),
@@ -104,10 +103,10 @@ public class OutputView {
         }
     }
 
-    private static void showFreeProducts(FreeProductsResult freeProductsResult) {
+    private static void showFreeProducts(List<FreeProductResult> freeProducts) {
         System.out.println("===========증   정=============");
         String format = "%s          %d         ";
-        for (FreeProductResult freeProductResult : freeProductsResult.freeProductsResult()) {
+        for (FreeProductResult freeProductResult : freeProducts) {
             System.out.println(format.formatted(
                     freeProductResult.name(),
                     freeProductResult.totalQuantity()

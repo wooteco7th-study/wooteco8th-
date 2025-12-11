@@ -6,12 +6,12 @@ import store.domain.AnswerCommand;
 import store.domain.MembershipDiscountPolicy;
 import store.domain.Order;
 import store.domain.Products;
-import store.domain.Promotion;
-import store.dto.OrderRequest;
-import store.dto.freeproduct.FreeProductResult;
-import store.dto.freeproduct.FreeProductsResult;
-import store.dto.purchasedproduct.PurchasedProductResult;
-import store.dto.purchasedproduct.PurchasedProductsResult;
+import store.domain.PromotionProcessor;
+import store.dto.request.OrderDecisionRequest;
+import store.dto.request.OrderRequest;
+import store.dto.response.FreeProductResult;
+import store.dto.response.OrderProcessResult;
+import store.dto.response.PurchasedProductResult;
 import store.util.RetryHandler;
 import store.view.InputView;
 import store.view.OutputView;
@@ -21,7 +21,9 @@ public class StoreController {
     public void run(Products products) {
         do {
             List<Order> orders = makeOrder(products);
-            processOrder(orders);
+            OrderProcessResult orderProcessResult = processOrder(orders);
+            int membershipDiscount = processMembershipDiscount(orderProcessResult.sumOfNonPromotionAmount());
+            OutputView.showReceipt(orderProcessResult, membershipDiscount);
         } while (wantAdditionalOrder());
     }
 
@@ -40,77 +42,59 @@ public class StoreController {
         return orders;
     }
 
-    private void processOrder(List<Order> orders) {
-        List<FreeProductResult> freeProducts = new ArrayList<>();
+    private OrderProcessResult processOrder(List<Order> orders) {
+        PromotionProcessor promotionProcessor = new PromotionProcessor();
         List<PurchasedProductResult> purchasedProducts = new ArrayList<>();
-        int sumOfNonPromotionProducts = 0;
+        List<FreeProductResult> freeProducts = new ArrayList<>();
+        int sumOfNonPromotionAmount = 0;
 
         for (Order order : orders) {
-            FreeProductResult freeProductResult = process(order);
-            if (freeProductResult == null || freeProductResult.totalQuantity() == 0) {
-                purchasedProducts.add(PurchasedProductResult.from(order));
-                sumOfNonPromotionProducts += order.getPurchasedQuantity() * order.getProduct().getPrice();
-                continue;
-            }
-            freeProducts.add(freeProductResult);
-            if (freeProductResult.freeProductQuantityByManual() > 0) {
-                purchasedProducts.add(PurchasedProductResult.of(order, order.getPromotion().getGetQuantity()));
-                continue;
-            }
-            purchasedProducts.add(PurchasedProductResult.from(order));
+            OrderProcessResult result = processSingleOrder(order, promotionProcessor);
+            purchasedProducts.addAll(result.purchasedProducts());
+            freeProducts.addAll(result.freeProducts());
+            sumOfNonPromotionAmount += result.sumOfNonPromotionAmount();
         }
-        PurchasedProductsResult purchasedProductsResult = new PurchasedProductsResult(purchasedProducts);
-        FreeProductsResult freeProductsResult = new FreeProductsResult(freeProducts);
-
-        int membershipDiscount = processMembershipDiscount(sumOfNonPromotionProducts);
-        OutputView.showReceipt(purchasedProductsResult, freeProductsResult, membershipDiscount);
+        return new OrderProcessResult(purchasedProducts, freeProducts, sumOfNonPromotionAmount);
     }
 
-    private FreeProductResult process(Order order) {
-        if (order.hasActivePromotion()) {
-            int freeProductQuantityByAuto = order.calculateFreeProductQuantity();
-            Promotion promotion = order.getPromotion();
-            int freeProductQuantityByManual = checkFreeProduct(order, promotion);
-            checkDiscountPossible(order);
-            return FreeProductResult.from(order.getProduct(), freeProductQuantityByAuto, freeProductQuantityByManual);
+    private OrderProcessResult processSingleOrder(Order order, PromotionProcessor promotionProcessor) {
+        if (order.hasInactivePromotion()) {
+            return processInactivePromotion(order);
         }
-        order.getProduct().getInventory().minusNonPromotionQuantity(order.getPurchasedQuantity());
-        return null;
+        OrderDecisionRequest request = askUserDecisions(order);
+        return promotionProcessor.process(request, order);
     }
 
-    private int checkFreeProduct(Order order, Promotion promotion) {
-        if (order.canGetFreeProduct(promotion) && isYesOfFreeProduct(order)) {
-            return order.getPromotion().getGetQuantity();
-        }
-        return 0;
+    private OrderProcessResult processInactivePromotion(Order order) {
+        PurchasedProductResult purchasedProductResult = PurchasedProductResult.from(order);
+        int sumOfNonPromotionAmount = order.calculatePurchasedPrice();
+        order.processNonPromotionOrder();
+        return new OrderProcessResult(List.of(purchasedProductResult), List.of(), sumOfNonPromotionAmount);
     }
 
-    private boolean isYesOfFreeProduct(Order order) {
-        AnswerCommand answerCommand = InputView.readAnswerOfFreeProduct(order.getProduct().getName());
-        if (answerCommand.equals(AnswerCommand.Y)) {
-            order.getProduct().getInventory().minusPromotionQuantity(order.getPurchasedQuantity() + order.getPromotion().getGetQuantity());
-            return true;
-        }
-        order.getProduct().getInventory().minusPromotionQuantity(order.getPurchasedQuantity());
-        return false;
+    private OrderDecisionRequest askUserDecisions(Order order) {
+        boolean acceptNonPromotionPrice = askAcceptNonPromotionPrice(order);
+        boolean wantExtraFreeProduct = askExtraFreeProduct(order);
+        return new OrderDecisionRequest(acceptNonPromotionPrice, wantExtraFreeProduct);
     }
 
-    private void checkDiscountPossible(Order order) {
-        if (!order.getProduct().getInventory().hasInsufficientPromotionQuantity(order.getPurchasedQuantity())) {
-            order.getProduct().getInventory().minusPromotionQuantity(order.getPromotion().getBuyQuantity() * order.calculateFreeProductQuantity() + order.calculateFreeProductQuantity());
-            return;
+    private boolean askAcceptNonPromotionPrice(Order order) {
+        if (order.hasSufficientPromotionQuantity()) {
+            return false;
         }
         int insufficientQuantity = order.getInsufficientQuantity();
-        readAnswerOfFullPrice(order, insufficientQuantity);
+        AnswerCommand answer = RetryHandler.retryOnInvalidInput(
+                () -> InputView.readAnswerOfFullPrice(order.getProductName(), insufficientQuantity));
+        return answer.isYes();
     }
 
-    private void readAnswerOfFullPrice(Order order, int insufficientQuantity) {
-        AnswerCommand answerCommand = InputView.readAnswerOfFullPrice(order.getProduct().getName(), insufficientQuantity);
-        if (answerCommand.equals(AnswerCommand.Y)) {
-            order.getProduct().getInventory().minusPromotionQuantity(order.getPurchasedQuantity());
-            return;
+    private boolean askExtraFreeProduct(Order order) {
+        if (order.canGetFreeProduct(order.getPromotion())) {
+            AnswerCommand answer = RetryHandler.retryOnInvalidInput(
+                    () -> InputView.readAnswerOfFreeProduct(order.getProductName()));
+            return answer.isYes();
         }
-        order.getProduct().getInventory().minusPromotionQuantity(order.getPurchasedQuantity() - insufficientQuantity);
+        return false;
     }
 
     private int processMembershipDiscount(int sumOfNonPromotionAmounts) {
@@ -121,7 +105,72 @@ public class StoreController {
     }
 
     private boolean wantAdditionalOrder() {
-        AnswerCommand answerCommand = RetryHandler.retryOnInvalidInput(InputView::readAdditionalPurchase);
-        return answerCommand.isYes();
+        AnswerCommand answer = RetryHandler.retryOnInvalidInput(InputView::readAdditionalPurchase);
+        return answer.isYes();
     }
 }
+
+//        for (Order order : orders) {
+//            if (order.hasInactivePromotion()) { ㅊㅓ리 완료
+//            }
+//            FreeProductResult freeProductResult = process(order);
+//            if (freeProductResult.totalQuantity() == 0) {
+//                purchasedProducts.add(PurchasedProductResult.from(order));
+//                sumOfNonPromotionAmount += order.getPurchasedQuantity() * order.getProduct().getPrice();
+//                continue;
+//            }
+//            freeProducts.add(freeProductResult);
+//            if (freeProductResult.freeProductQuantityByManual() > 0) {
+//                purchasedProducts.add(PurchasedProductResult.of(order, order.getPromotion().getGetQuantity()));
+//                continue;
+//            }
+//            purchasedProducts.add(PurchasedProductResult.from(order));
+//        }
+//
+//        int membershipDiscount = processMembershipDiscount(sumOfNonPromotionAmount);
+//        return new OrderProcessResult(purchasedProducts, freeProducts,
+//                sumOfNonPromotionAmount, membershipDiscount);
+
+
+//    private FreeProductResult process(Order order) {
+//        int freeProductQuantityByAuto = order.calculateFreeProductQuantity();
+//        Promotion promotion = order.getPromotion();
+//        int freeProductQuantityByManual = checkFreeProduct(order, promotion);
+//        checkDiscountPossible(order);
+//        return FreeProductResult.from(order.getProduct(), freeProductQuantityByAuto, freeProductQuantityByManual);
+//    }
+//
+//    private int checkFreeProduct(Order order, Promotion promotion) {
+//        if (order.canGetFreeProduct(promotion) && isYesOfFreeProduct(order)) {
+//            return order.getPromotion().getGetQuantity();
+//        }
+//        return 0;
+//    }
+//
+//    private boolean isYesOfFreeProduct(Order order) {
+//        AnswerCommand answerCommand = InputView.readAnswerOfFreeProduct(order.getProduct().getName());
+//        if (answerCommand.equals(AnswerCommand.Y)) {
+//            order.getProduct().getInventory().minusPromotionQuantity(order.getPurchasedQuantity() + order.getPromotion().getGetQuantity());
+//            return true;
+//        }
+//        order.getProduct().getInventory().minusPromotionQuantity(order.getPurchasedQuantity());
+//        return false;
+//    }
+//
+//    private void checkDiscountPossible(Order order) {
+//        if (!order.getProduct().getInventory().hasInsufficientPromotionQuantity(order.getPurchasedQuantity())) {
+//            order.getProduct().getInventory().minusPromotionQuantity(order.getPromotion().getBuyQuantity() * order.calculateFreeProductQuantity() + order.calculateFreeProductQuantity());
+//            return;
+//        }
+//        int insufficientQuantity = order.getInsufficientQuantity();
+//        readAnswerOfFullPrice(order, insufficientQuantity);
+//    }
+//
+//    private void readAnswerOfFullPrice(Order order, int insufficientQuantity) {
+//        AnswerCommand answerCommand = InputView.readAnswerOfFullPrice(order.getProductName(), insufficientQuantity);
+//        if (answerCommand.equals(AnswerCommand.Y)) {
+//            order.getProduct().getInventory().minusPromotionQuantity(order.getPurchasedQuantity());
+//            return;
+//        }
+//        order.getProduct().getInventory().minusPromotionQuantity(order.getPurchasedQuantity() - insufficientQuantity);
+//}

@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import store.domain.AnswerCommand;
-import store.dto.OrderRequest;
+import store.dto.request.OrderRequest;
 import store.exception.ExceptionMessage;
 import store.util.Parser;
 

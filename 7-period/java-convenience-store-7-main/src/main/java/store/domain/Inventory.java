@@ -40,6 +40,10 @@ public class Inventory {
         this.promotionQuantity -= purchasedQuantity;
     }
 
+    public boolean hasSufficientPromotionQuantity(int purchasedQuantity) {
+        return promotionQuantity >= purchasedQuantity;
+    }
+
     public boolean hasInsufficientPromotionQuantity(int purchasedQuantity) {
         return promotionQuantity < purchasedQuantity;
     }
