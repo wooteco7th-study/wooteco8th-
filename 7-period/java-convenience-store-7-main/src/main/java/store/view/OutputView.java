@@ -11,6 +11,15 @@ public class OutputView {
     private static final String ERROR_MESSAGE_PREFIX = "[ERROR] ";
     private static final String NEW_LINE = System.lineSeparator();
     private static final String PRODUCT_FORMAT = "- %s %,d원 %s %s";
+    private static final String PURCHASED_PRODUCTS_FORMAT = "%s\t\t\t%d\t\t%,d";
+    private static final String FREE_PRODUCT_FORMAT = "%s\t\t\t%d";
+    private static final String TOTAL_PRICE_FORMAT = """
+            =============================
+            총구매액\t\t\t%d\t\t %,d
+            행사할인\t\t\t\t\t-%,d
+            멤버십할인\t\t\t\t\t-%,d
+            내실돈\t\t\t\t\t %,d
+            """;
 
     public static void showInventory(List<Product> products) {
         System.out.println("""
@@ -60,43 +69,16 @@ public class OutputView {
     }
 
     public static void showReceipt(OrderProcessResult result, int membershipDiscount) {
-        System.out.println(NEW_LINE + "===========W 편의점=============");
         showPurchasedProducts(result.purchasedProducts());
         showFreeProducts(result.freeProducts());
-
-        System.out.println("=============================");
-        String format = """
-                총구매액            %d     %,d
-                행사할인                   -%,d
-                멤버십할인                  -%,d
-                내실돈                    %,d
-                """;
-        int totalQuantity = 0;
-        int totalPrice = 0;
-        for (PurchasedProductResult purchasedProductResult : result.purchasedProducts()) {
-            totalQuantity += purchasedProductResult.quantity();
-            totalPrice += purchasedProductResult.price();
-        }
-        int promotionDiscountAmount = 0;
-        for (FreeProductResult freeProductResult : result.freeProducts()) {
-            promotionDiscountAmount += freeProductResult.price();
-        }
-
-        System.out.println(format.formatted(
-                totalQuantity, totalPrice,
-                promotionDiscountAmount,
-                membershipDiscount,
-                totalPrice - promotionDiscountAmount - membershipDiscount
-        ));
+        showTotalPrice(result, membershipDiscount);
     }
 
     private static void showPurchasedProducts(List<PurchasedProductResult> purchaseProducts) {
-        String header = "%-15s %4s %10s%n";
-        String format = "%-15s %4d %,10d";
-
-        System.out.printf(header, "상품명", "수량", "금액");
+        System.out.println(NEW_LINE + "===========W 편의점=============");
+        System.out.println("상품명\t\t\t수량\t\t금액");
         for (PurchasedProductResult purchasedProductResult : purchaseProducts) {
-            System.out.println(format.formatted(
+            System.out.println(PURCHASED_PRODUCTS_FORMAT.formatted(
                     purchasedProductResult.name(),
                     purchasedProductResult.quantity(),
                     purchasedProductResult.price()));
@@ -104,14 +86,35 @@ public class OutputView {
     }
 
     private static void showFreeProducts(List<FreeProductResult> freeProducts) {
-        System.out.println("===========증   정=============");
-        String format = "%s          %d         ";
+        System.out.println("===========증\t정============");
         for (FreeProductResult freeProductResult : freeProducts) {
-            System.out.println(format.formatted(
+            System.out.println(FREE_PRODUCT_FORMAT.formatted(
                     freeProductResult.name(),
                     freeProductResult.totalQuantity()
             ));
         }
+    }
+
+    private static void showTotalPrice(OrderProcessResult result, int membershipDiscount) {
+        int totalQuantity = result.purchasedProducts().stream()
+                .mapToInt(PurchasedProductResult::quantity)
+                .sum();
+        int totalPrice = result.purchasedProducts().stream()
+                .mapToInt(PurchasedProductResult::price)
+                .sum();
+        int promotionDiscountAmount = result.freeProducts().stream()
+                .mapToInt(FreeProductResult::price)
+                .sum();
+        showTotalPrice(membershipDiscount, totalQuantity, totalPrice, promotionDiscountAmount);
+    }
+
+    private static void showTotalPrice(int membershipDiscount, int totalQuantity, int totalPrice, int promotionDiscountAmount) {
+        System.out.println(TOTAL_PRICE_FORMAT.formatted(
+                totalQuantity, totalPrice,
+                promotionDiscountAmount,
+                membershipDiscount,
+                totalPrice - promotionDiscountAmount - membershipDiscount
+        ));
     }
 
     public static void showError(String message) {

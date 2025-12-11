@@ -43,7 +43,7 @@ public final class InputView {
     }
 
     public static AnswerCommand readAnswerOfFreeProduct(String productName) {
-        String message = "\n현재 " + productName + "은(는) 1개를 무료로 더 받을 수 있습니다. 추가하시겠습니까? (Y/N)";
+        String message = NEW_LINE + "현재 " + productName + "은(는) 1개를 무료로 더 받을 수 있습니다. 추가하시겠습니까? (Y/N)";
         return readCommand(message);
     }
 
@@ -54,12 +54,12 @@ public final class InputView {
     }
 
     public static AnswerCommand readMembership() {
-        System.out.println("멤버십 할인을 받으시겠습니까? (Y/N)");
+        System.out.println(NEW_LINE + "멤버십 할인을 받으시겠습니까? (Y/N)");
         return AnswerCommand.from(readLine());
     }
 
     public static AnswerCommand readAdditionalPurchase() {
-        System.out.println("감사합니다. 구매하고 싶은 다른 상품이 있나요? (Y/N)");
+        System.out.println(NEW_LINE + "감사합니다. 구매하고 싶은 다른 상품이 있나요? (Y/N)");
         return AnswerCommand.from(readLine());
     }
 
