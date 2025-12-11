@@ -1,22 +1,16 @@
 package store.domain;
 
-import java.util.ArrayList;
-import java.util.List;
 import store.dto.request.OrderDecisionRequest;
 import store.dto.response.FreeProductResult;
-import store.dto.response.OrderProcessResult;
 import store.dto.response.PurchasedProductResult;
+import store.dto.response.SingleOrderResult;
 
 public class PromotionProcessor {
 
-    public OrderProcessResult process(OrderDecisionRequest request, Order order) {
-        int autoFreeQuantity = order.calculateFreeProductQuantity();
+    public SingleOrderResult process(OrderDecisionRequest request, Order order) {
         int manualFreeQuantity = calculateManualFreeQuantity(order, request);
-
-        adjustInventory(request, order, manualFreeQuantity);
-        FreeProductResult freeProductResult =
-                FreeProductResult.from(order.getProduct(), autoFreeQuantity, manualFreeQuantity);
-        return buildOrderProcessResult(order, freeProductResult);
+        minusStock(request, order, manualFreeQuantity);
+        return createOrderProcessResult(order, manualFreeQuantity);
     }
 
     private int calculateManualFreeQuantity(Order order, OrderDecisionRequest request) {
@@ -29,75 +23,51 @@ public class PromotionProcessor {
         return order.getPromotionGetQuantity();
     }
 
-    private void adjustInventory(OrderDecisionRequest request, Order order, int manualFreeQuantity) {
-        Inventory inventory = order.getProduct().getInventory();
+    private void minusStock(OrderDecisionRequest request, Order order, int manualFreeQuantity) {
+        Inventory inventory = order.getProductInventory();
         int purchasedQuantity = order.getPurchasedQuantity();
-
-        // 1) 수동 무료 수량에 따른 기본 차감
         if (manualFreeQuantity > 0) {
-            int basePromotionQuantity = purchasedQuantity + manualFreeQuantity;
-            inventory.minusPromotionQuantity(basePromotionQuantity);
+            inventory.minusPromotionQuantity(purchasedQuantity + manualFreeQuantity);
             return;
         }
-        // 2) 프로모션 재고 부족 체크 (2-1 단계)
         if (inventory.hasInsufficientPromotionQuantity(purchasedQuantity)) {
-            handleInsufficientPromotion(order, request, inventory);
+            handleInsufficientPromotion(request, order, inventory);
             return;
         }
         inventory.minusPromotionQuantity(purchasedQuantity);
     }
 
-    private void handleInsufficientPromotion(
-            Order order,
-            OrderDecisionRequest request,
-            Inventory inventory
-    ) {
-        int purchasedQty = order.getPurchasedQuantity();
-        int insufficientQty = order.getInsufficientQuantity();
+    private void handleInsufficientPromotion(OrderDecisionRequest request, Order order, Inventory inventory) {
+        int purchasedQuantity = order.getPurchasedQuantity();
+        int insufficientQuantity = order.getInsufficientQuantity();
 
         if (request.acceptNonPromotionPrice()) {
-            // 부족분도 정가로 다 사는 경우
-            inventory.minusPromotionQuantity(purchasedQty);
+            inventory.minusPromotionQuantity(purchasedQuantity);
             return;
         }
-
-        // 부족한 수량만큼은 안 사고, 프로모션 가능한 수량만 구매
-        inventory.minusPromotionQuantity(purchasedQty - insufficientQty);
+        inventory.minusPromotionQuantity(purchasedQuantity - insufficientQuantity);
     }
 
-    private OrderProcessResult buildOrderProcessResult(
-            Order order,
-            FreeProductResult freeProductResult
-    ) {
-        List<PurchasedProductResult> purchased = new ArrayList<>();
-        List<FreeProductResult> free = new ArrayList<>();
-        int sumOfNonPromotionAmount = 0;
+    private SingleOrderResult createOrderProcessResult(Order order, int manualFreeQuantity) {
+        FreeProductResult freeProductResult = createFreeProductResult(order, manualFreeQuantity);
+        PurchasedProductResult purchasedProductResult = createPurchasedProductResult(order, freeProductResult);
 
         if (freeProductResult.totalQuantity() == 0) {
-            purchased.add(PurchasedProductResult.from(order));
-            sumOfNonPromotionAmount =
-                    order.getPurchasedQuantity() * order.getProduct().getPrice();
-            return new OrderProcessResult(purchased, free, sumOfNonPromotionAmount);
+            int sumOfNonPromotionAmount = order.getPurchasedQuantity() * order.getProductPrice();
+            return SingleOrderResult.createWithoutFreeProduct(purchasedProductResult, sumOfNonPromotionAmount);
         }
-
-        free.add(freeProductResult);
-        addPurchasedWithFree(order, freeProductResult, purchased);
-
-        return new OrderProcessResult(purchased, free, sumOfNonPromotionAmount);
+        return new SingleOrderResult(purchasedProductResult, freeProductResult, 0);
     }
 
-    private void addPurchasedWithFree(
-            Order order,
-            FreeProductResult freeProductResult,
-            List<PurchasedProductResult> purchased
-    ) {
+    private FreeProductResult createFreeProductResult(Order order, int manualFreeQuantity) {
+        int autoFreeQuantity = order.calculateFreeProductQuantity();
+        return FreeProductResult.from(order.getProduct(), autoFreeQuantity, manualFreeQuantity);
+    }
+
+    private PurchasedProductResult createPurchasedProductResult(Order order, FreeProductResult freeProductResult) {
         if (freeProductResult.freeProductQuantityByManual() > 0) {
-            purchased.add(PurchasedProductResult.of(
-                    order,
-                    order.getPromotion().getGetQuantity()
-            ));
-            return;
+            return PurchasedProductResult.of(order, order.getPromotionGetQuantity());
         }
-        purchased.add(PurchasedProductResult.from(order));
+        return PurchasedProductResult.from(order);
     }
 }

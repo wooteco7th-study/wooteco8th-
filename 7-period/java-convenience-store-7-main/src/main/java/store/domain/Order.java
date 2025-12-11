@@ -62,6 +62,10 @@ public class Order {
         return product.getName();
     }
 
+    public Inventory getProductInventory() {
+        return product.getInventory();
+    }
+
     public Product getProduct() {
         return product;
     }
@@ -83,7 +87,7 @@ public class Order {
     }
 
     public int getInsufficientQuantity() {
-        int totalQuantity = getPromotion().getBuyQuantity() + getPromotion().getGetQuantity();
+        int totalQuantity = getPromotionBuyQuantity() + getPromotionGetQuantity();
         return purchasedQuantity - (totalQuantity * (getProductPromotionQuantity() / totalQuantity));
     }
 
@@ -102,6 +106,10 @@ public class Order {
 
     public boolean hasSufficientPromotionQuantity() {
         return product.hasSufficientPromotionQuantity(purchasedQuantity);
+    }
+
+    public int getPromotionBuyQuantity() {
+        return product.getPromotionBuyQuantity();
     }
 
     public int getPromotionGetQuantity() {
